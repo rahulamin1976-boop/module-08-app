@@ -1,7 +1,7 @@
 # Module 18 Completion Report
 
 ## Target Application
-- URL: http://127.0.0.1:5173 (localhost:5173; backend API proxied to localhost:3001)
+- URL: http://127.0.0.1:5173
 
 ## QA Findings
 | # | Category | Finding | Severity | MCP Tool Used |
