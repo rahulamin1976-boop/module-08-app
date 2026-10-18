@@ -184,19 +184,27 @@ export async function getAccessibleResources(accessToken, fetchImpl = fetch) {
   } catch {
     throw new Error("Atlassian returned an invalid site response.");
   }
-  if (!Array.isArray(resources) || resources.length !== 1) {
+  if (!Array.isArray(resources)) {
+    throw new Error("Atlassian returned an invalid site response.");
+  }
+  for (const entry of resources) {
+    if (
+      typeof entry?.id !== "string" ||
+      typeof entry.url !== "string" ||
+      typeof entry.name !== "string"
+    ) {
+      throw new Error("Atlassian returned an invalid site response.");
+    }
+  }
+  // Atlassian lists a site once per scope type (classic and granular), so
+  // entries sharing a cloud ID are the same site.
+  const sites = [...new Map(resources.map((entry) => [entry.id, entry])).values()];
+  if (sites.length !== 1) {
     const error = new Error("Exactly one accessible Atlassian Cloud site is required.");
     error.code = "SITE_SELECTION_REQUIRED";
     throw error;
   }
-  const [resource] = resources;
-  if (
-    typeof resource.id !== "string" ||
-    typeof resource.url !== "string" ||
-    typeof resource.name !== "string"
-  ) {
-    throw new Error("Atlassian returned an invalid site response.");
-  }
+  const [resource] = sites;
   const siteUrl = new URL(resource.url);
   if (siteUrl.protocol !== "https:") {
     throw new Error("Atlassian returned an invalid site response.");
