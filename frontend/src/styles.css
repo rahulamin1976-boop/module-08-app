@@ -223,7 +223,7 @@ input:disabled, select:disabled, textarea:disabled { opacity: .76; }
   color: #fff; background: #315be8; font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800;
 }
 .integration-copy h2 { margin-bottom: 4px; }
-.connection-warning { grid-column: 1 / -1; }
+.connection-warning, .connection-panel > .page-state, .requested-permissions { grid-column: 1 / -1; }
 .connection-panel > .button { grid-column: 1 / -1; justify-self: start; }
 .button-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 6px; }
 
