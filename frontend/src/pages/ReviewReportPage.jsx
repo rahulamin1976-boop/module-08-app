@@ -291,6 +291,7 @@ export default function ReviewReportPage() {
                 {categories.map(({ value, label }) => (
                   <label key={value}>
                     <input
+                      name={`confirmEmpty.${value}`}
                       type="checkbox"
                       checked={confirmedEmptyCategories.includes(value)}
                       disabled={itemCategories.has(value)}

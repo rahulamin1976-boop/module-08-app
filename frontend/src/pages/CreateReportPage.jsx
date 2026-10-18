@@ -256,6 +256,7 @@ export default function CreateReportPage() {
             <label>
               Search Jira projects
               <input
+                name="projectQuery"
                 value={projectQuery}
                 onChange={(event) => setProjectQuery(event.target.value)}
                 maxLength={100}
@@ -275,6 +276,7 @@ export default function CreateReportPage() {
           <label>
             Jira project
             <select
+              name="projectId"
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
               disabled={!connection?.connected || projectSearchState === "loading"}
@@ -291,6 +293,7 @@ export default function CreateReportPage() {
           <label>
             Time zone
             <input
+              name="timezone"
               value={timezone}
               onChange={(event) => setTimezone(event.target.value)}
               placeholder="UTC"
@@ -300,6 +303,7 @@ export default function CreateReportPage() {
           <label>
             Period start
             <input
+              name="periodStart"
               type="date"
               value={periodStart}
               onChange={(event) => setPeriodStart(event.target.value)}
@@ -309,6 +313,7 @@ export default function CreateReportPage() {
           <label>
             Period end
             <input
+              name="periodEnd"
               type="date"
               value={periodEnd}
               onChange={(event) => setPeriodEnd(event.target.value)}
@@ -388,6 +393,7 @@ export default function CreateReportPage() {
                   {categories.map(({ value, label }) => (
                     <label key={value}>
                       <input
+                        name={`confirmEmpty.${value}`}
                         type="checkbox"
                         checked={confirmedEmptyCategories.includes(value)}
                         disabled={occupiedCategories.has(value)}

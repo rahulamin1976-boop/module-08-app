@@ -201,6 +201,7 @@ export default function PublishReportPage() {
             <label>
               Search Confluence spaces by key
               <input
+                name="spaceQuery"
                 value={spaceQuery}
                 onChange={(event) => setSpaceQuery(event.target.value)}
                 maxLength={100}
@@ -224,6 +225,7 @@ export default function PublishReportPage() {
             <label>
               Confluence space
               <select
+                name="spaceId"
                 value={spaceId}
                 onChange={(event) => {
                   setSpaceId(event.target.value);
@@ -258,6 +260,7 @@ export default function PublishReportPage() {
                 <label>
                   Search parent pages
                   <input
+                    name="pageQuery"
                     value={pageQuery}
                     onChange={(event) => setPageQuery(event.target.value)}
                     maxLength={100}
@@ -282,6 +285,7 @@ export default function PublishReportPage() {
                   <label>
                     Parent page
                     <select
+                      name="parentPageId"
                       value={parentPageId}
                       onChange={(event) => setParentPageId(event.target.value)}
                       required
@@ -314,6 +318,7 @@ export default function PublishReportPage() {
               <label>
                 Add a disambiguating title suffix after reviewing the collision
                 <input
+                  name="titleSuffix"
                   value={titleSuffix}
                   onChange={(event) => setTitleSuffix(event.target.value)}
                   maxLength={150}

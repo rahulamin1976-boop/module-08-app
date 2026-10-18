@@ -143,6 +143,43 @@ test("access tokens refresh under a database row lock and rotate atomically", as
   assert.equal(queries.at(-1).sql, "COMMIT");
 });
 
+test("access token request without a connection is NOT_CONNECTED even when OAuth is unconfigured", async () => {
+  const queries = [];
+  const client = {
+    async query(sql) {
+      queries.push(sql);
+      return { rowCount: 0, rows: [] };
+    },
+    release() {},
+  };
+  const service = createConnectionService({
+    pool: { connect: async () => client },
+    env: { ATLASSIAN_CLIENT_ID: "", ATLASSIAN_CLIENT_SECRET: "" },
+  });
+
+  await assert.rejects(service.getAccessToken(), {
+    status: 401,
+    code: "NOT_CONNECTED",
+  });
+  assert.equal(queries.at(-1), "ROLLBACK");
+});
+
+test("access token request with a connection but unconfigured OAuth is ATLASSIAN_NOT_CONFIGURED", async () => {
+  const { client, queries } = connectionClient({
+    expiresAt: "2026-10-18T19:00:00.000Z",
+  });
+  const service = createConnectionService({
+    pool: { connect: async () => client },
+    env: { ...env, ATLASSIAN_CLIENT_ID: "" },
+  });
+
+  await assert.rejects(service.getAccessToken(), {
+    status: 503,
+    code: "ATLASSIAN_NOT_CONFIGURED",
+  });
+  assert.equal(queries.at(-1).sql, "ROLLBACK");
+});
+
 test("failed refresh removes only the connection and requires reauthorization", async () => {
   const { client, queries } = connectionClient({
     expiresAt: "2026-10-18T19:00:00.000Z",

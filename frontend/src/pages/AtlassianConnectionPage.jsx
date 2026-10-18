@@ -172,6 +172,7 @@ export default function AtlassianConnectionPage() {
             <div className="account-switch">
               <label>
                 <input
+                  name="confirmAccountSwitch"
                   type="checkbox"
                   checked={switchConfirmed}
                   onChange={(event) => setSwitchConfirmed(event.target.checked)}

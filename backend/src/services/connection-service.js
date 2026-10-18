@@ -125,7 +125,6 @@ export function createConnectionService({
   }
 
   async function getAccessToken() {
-    const { config, encryption } = getSettings();
     const client = await pool.connect();
     let transactionOpen = false;
 
@@ -141,6 +140,18 @@ export function createConnectionService({
       );
       if (result.rowCount === 0) {
         throw createApiError(401, "NOT_CONNECTED", "Connect an Atlassian account first.");
+      }
+
+      let config;
+      let encryption;
+      try {
+        ({ config, encryption } = getSettings());
+      } catch {
+        throw createApiError(
+          503,
+          "ATLASSIAN_NOT_CONFIGURED",
+          "Atlassian OAuth is not configured on this local installation.",
+        );
       }
 
       const connection = result.rows[0];

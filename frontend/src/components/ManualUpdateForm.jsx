@@ -37,6 +37,7 @@ export default function ManualUpdateForm({ updates, onChange, disabled = false }
           <label>
             Category
             <select
+              name={`manualUpdates.${index}.category`}
               value={item.category}
               onChange={(event) => update(index, { category: event.target.value })}
               required
@@ -53,6 +54,7 @@ export default function ManualUpdateForm({ updates, onChange, disabled = false }
           <label>
             Update text
             <textarea
+              name={`manualUpdates.${index}.text`}
               value={item.text}
               onChange={(event) => update(index, { text: event.target.value })}
               maxLength={2000}
@@ -65,6 +67,7 @@ export default function ManualUpdateForm({ updates, onChange, disabled = false }
           <label>
             Owner (optional)
             <input
+              name={`manualUpdates.${index}.owner`}
               value={item.owner}
               onChange={(event) => update(index, { owner: event.target.value })}
               maxLength={120}
