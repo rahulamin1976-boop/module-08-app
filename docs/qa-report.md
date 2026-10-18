@@ -1,76 +1,69 @@
-# QA Report — Weekly Status (Atlassian Status Automation)
+# QA Report — Weekly Status | Atlassian Status Automation
 
-- **Date:** 2026-10-18
-- **Environment:** local prototype. Frontend (Vite) at `http://127.0.0.1:5173`, backend at `http://127.0.0.1:3001`, PostgreSQL 15 in Docker.
-- **Browsers:** VS Code integrated browser (interaction, console checks) and headless Google Chrome (screenshots).
-- **State under test:** Atlassian not connected, no saved reports.
+**Date:** 2026-10-18
+**Method:** Exploratory testing driven through Chrome DevTools MCP (console, snapshots, screenshots, scripted interaction), plus the backend and frontend automated test suites.
+**Environment:** React/Vite frontend (`127.0.0.1:5173`), Express backend (`127.0.0.1:3001`), Postgres 15 (docker-compose), real Atlassian OAuth connection (account: Rahul Amin; Jira projects KAN, SAM1).
 
-## 1. Summary of Pages Tested
+## 1. Pages visited
 
-| Page | URL | Result | Screenshot |
-|------|-----|--------|------------|
-| Weekly reports (home) | `/` | Pass | [01-weekly-reports.png](screenshots/01-weekly-reports.png) |
-| Create report | `/reports/new` | Pass for input, submit blocked | [02-create-report.png](screenshots/02-create-report.png) |
-| Atlassian connection | `/connection` | Pass after fix, connect blocked | [03 before](screenshots/03-connection-before-fix.png), [04 after](screenshots/04-connection-after-fix.png) |
+| Route | Purpose | Result |
+|---|---|---|
+| `/` | Home / report list | Pass. "Backend online" indicator OK, no console errors |
+| `/reports/new` | Create report | Pass once connected |
+| `/connection` | Atlassian connection | Pass. OAuth connect and sign-in completed |
+| `/reports/:id/review` | Review and approve | Pass. Empty-section confirmation enforced |
+| `/reports/:id/publish` | Publish to Confluence | Pass. Published successfully |
+| `*` | NotFound | Defined in routing, not exercised manually |
 
-Not tested live: the report review and publish pages. They need a connected Atlassian account and a saved report. They are covered by mocked automated tests only.
+Screenshots: [main-page.png](./main-page.png) and [screenshots/](./screenshots/) (earlier unconnected-state run).
 
-## 2. Interactive Tests Performed
+## 2. Elements tested
 
-| # | Page | Test | Result |
-|---|------|------|--------|
-| 1 | `/` | Page loads with no console errors | Pass |
-| 2 | `/` | "Create a report" button navigates to `/reports/new` | Pass |
-| 3 | `/` | Empty-state card, "Set up Atlassian connection" link and 3-step workflow list render | Pass |
-| 4 | All | Sidebar links (Weekly reports, Create report, Atlassian connection) navigate correctly | Pass |
-| 5 | All | "Backend online" indicator, top bar text and "Local prototype" badge render | Pass |
-| 6 | `/reports/new` | Period start and Period end accept dates (2026-10-12, 2026-10-18) | Pass |
-| 7 | `/reports/new` | Time zone defaults to `UTC` | Pass |
-| 8 | `/reports/new` | Jira project dropdown is disabled while Atlassian is not connected | Pass (expected) |
-| 9 | `/reports/new` | "Add update" adds a manual-update block (Category, Update text, Owner, Remove update) | Pass |
-| 10 | `/reports/new` | Update text accepts input and the counter updates (22/2000) | Pass |
-| 11 | `/reports/new` | "Connect Atlassian before creating a report" warning and "Open connection settings" link render | Pass |
-| 12 | `/reports/new` | "Save draft" stays disabled without a project | Pass (expected) |
-| 13 | `/connection` | "Not connected" badge, credentials info box, 4-item "Access requested" list and "Back to weekly reports" link render | Pass after fix |
-| 14 | `/connection` | Click "Connect Atlassian" | Blocked: HTTP 503, "Atlassian OAuth is not configured on this local installation." |
-| 15 | All | Console and network check on all three pages plus the connect click | 0 JavaScript exceptions, 0 warnings, 1 expected 503 |
+- **Connection:** Connect Atlassian button, account-switch confirmation checkbox, connection status and account display.
+- **Create report:** Jira project search and select, time zone input, period start and end date inputs, manual update form (category, text, owner, add and remove), Jira candidate checkboxes and category selects, Save draft (disabled until connected).
+- **Review:** report item editor (category, text, owner), empty-section confirmation checkboxes, version save, approve.
+- **Publish:** Confluence space search and select, parent page search and select, title suffix (shown on title collision), proposed title preview, publish action.
+- **Global:** console errors and warnings, DevTools Issues, `/health` through the Vite proxy, API behaviour when disconnected.
 
-## 3. Bugs Found
+## 3. End-to-end flow executed
 
-| # | Severity | Page | Description | Evidence | Status |
-|---|----------|------|-------------|----------|--------|
-| 1 | Medium (UI) | `/connection` | The "Credentials stay on this machine" box and the "Access requested" list sat in the 43px icon column of the connection panel grid. Text wrapped one word per line and stretched the page. | [03-connection-before-fix.png](screenshots/03-connection-before-fix.png) | **Fixed** |
-| 2 | High (blocker, configuration) | `/connection` | "Connect Atlassian" returns 503 `ATLASSIAN_NOT_CONFIGURED`. `backend/.env` was missing, and the Atlassian client ID and secret are still empty. | Console: `POST /api/v1/integrations/atlassian/oauth/start` 503 | **Open**, needs user action |
-| 3 | Low (UX) | `/reports/new` | The "Connect Atlassian before creating a report" warning appeared only after the user started typing. At first load only "Checking Atlassian connection" shows. | Observed during test 11 | **Open** (not investigated) |
-| 4 | Medium (environment) | Backend | A stale backend process kept port 3001 with an outdated database password, which caused a `28P01` auth error on OAuth start. | curl output during the fix | **Fixed** |
+1. Connected Atlassian through the user's regular Chrome. Google sign-in is blocked in automation Chrome.
+2. Created a draft: project KAN, 12–18 Oct 2026, manual update. The week had no Jira updates.
+3. Saved v2 with Blockers and Next week confirmed empty, then approved.
+4. Published to the HR space under the "Human Resources" parent page, after explicit confirmation.
+5. Result: https://rahulamin1976.atlassian.net/spaces/HR/pages/360449/KAN+Weekly+Status+2026-10-12+to+2026-10-18
 
-## 4. Fixes Applied
+## 4. Bugs found
 
-| Bug | Fix | Commit | Verification |
-|-----|-----|--------|--------------|
-| 1 | In `frontend/src/styles.css`, added `.connection-panel > .page-state` and `.requested-permissions` to the rule that makes items span the full grid row (`grid-column: 1 / -1`). | `fd119dc` fix: make connection page info boxes span the full panel width | [04-connection-after-fix.png](screenshots/04-connection-after-fix.png); frontend tests 18/18 and build OK |
-| 2 (partial) | Created `backend/.env` (git-ignored, not committed) with a local token encryption key, database URL, redirect URI, scopes and UI origin. Client ID and secret were left empty on purpose. | Not committed (configuration only) | Backend starts from `.env`; the 503 remains until credentials are added |
-| 4 | Reset the password of the isolated `module08_local_app` role, ran migrations, stopped the stale process and restarted the backend. The original `weekly_status` database was not touched. | Not committed (local environment only) | `/health` 200 and OAuth start returns the expected `ATLASSIAN_NOT_CONFIGURED` |
+| # | Severity | Description | Status |
+|---|---|---|---|
+| 1 | Medium | `GET /api/v1/jira/projects` returned **500** when no Atlassian account was connected. OAuth settings were read before the connection lookup. Expected 401 `NOT_CONNECTED`. | Fixed |
+| 2 | Low | DevTools Issue "A form field element should have an id or name attribute": 4 on `/connection`, 12 across the report flow. | Fixed |
+| 3 | Info | Connect button returns 503 when `ATLASSIAN_CLIENT_ID` and `ATLASSIAN_CLIENT_SECRET` are unset. | Expected behaviour (configuration) |
+| 4 | Info | The DevTools `fill` tool leaves React state empty on `<input type=date>`. | Tooling limitation, not an app bug |
 
-Earlier fix in this session: the PostgreSQL date-shift bug (local year/month/day instead of `toISOString()`) and the Publish page, in commit `0037b01`.
+No JavaScript errors or warnings were observed on any page.
 
-## 5. Current Application Status
+## 5. Fixes applied
 
-**Automated tests (re-run after the fixes):**
+Both fixes are in commit `cc9fbb3`.
 
-| Suite | Result |
-|-------|--------|
-| Backend (`npm --prefix backend test`) | 67 passed, 0 failed |
-| Frontend (`npm --prefix frontend test`) | 18 passed, 0 failed |
-| Frontend production build | Success |
-| Database tests (earlier, disposable DB) | 7 of 7 passed |
+1. **Backend:** `backend/src/services/connection-service.js` (`getAccessToken`) checks the stored connection first and returns 401 `NOT_CONNECTED`. It loads OAuth settings afterwards and returns 503 `ATLASSIAN_NOT_CONFIGURED` if they are missing. Two regression tests were added in `backend/tests/services/connection-service.test.js`.
+2. **Frontend:** `name` attributes added to 15 form fields in `ManualUpdateForm`, `CreateReportPage`, `PublishReportPage`, `ReviewReportPage` and `AtlassianConnectionPage`. `JiraCandidateList` and `ReportItemEditor` already had `id`s.
 
-**Services:** backend `/health` 200, frontend 200, `GET /api/v1/integrations/atlassian/` returns `{"connected":false}`.
+## 6. Current status
 
-**Known issues:**
-1. Atlassian OAuth is not configured (Bug 2). Live connect, project selection, draft save, review, approve and publish are unverified.
-2. Late connection warning on the Create page (Bug 3).
-3. Node is v24.15.0 but the backend declares `>=24.22.0 <25`. Tests pass, but the versions should be aligned.
-4. Pending spec tasks: T036 end-to-end, T037 security, T038 failure-recovery and T039 accessibility tests; T040 documentation; T041 final acceptance run. T031–T035 are implemented but not checked off in `spec/tasks.md`.
+| Check | Result |
+|---|---|
+| Backend tests | 69/69 pass |
+| Frontend tests | 18/18 pass |
+| Console errors and warnings | None |
+| DevTools form-field issue | Gone on `/reports/new` |
+| Create, review, approve and publish flow | Pass |
 
-**Next steps:** register an Atlassian OAuth 2.0 (3LO) app with callback `http://127.0.0.1:3001/api/v1/integrations/atlassian/oauth/callback`, put its client ID and secret in `backend/.env`, restart the backend, then re-run the full flow.
+## 7. Limitations and follow-ups
+
+- After the `name` attribute change, only `/reports/new` was re-checked in the browser. Re-check `/connection`, review and publish.
+- The NotFound route and error paths (title collision, uncertain publish response) were covered by unit tests only.
+- No cross-browser, responsive, accessibility or performance (Lighthouse) testing was done.
+- The published Confluence page is test data and can be deleted.
